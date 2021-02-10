@@ -1,60 +1,134 @@
-# Load packages ----
+# Load Packages ----
 library(tidyverse)
 library(ggplot2)
 library(reshape2)
-# Load data ----
+library(magrittr)
+# Load Data ----
 load(url("https://www.dropbox.com/s/dfmc21bdovpmyjx/cb_project_data.RData?dl=1"))
-# Plot Data ----
-ggplot(data = EU, aes(x = date, y = infl)) +
-  geom_line() +
-  labs(x = "", y = "Percentage", title = "Inflation")
-ggplot(data = EU, aes(x = date, y = int)) +
-  geom_line() +
-  labs(x = "", y = "Percentage", title = "Interest Rate Growth of EU")
-ggplot(data = EU, aes(x = date, y = gap)) +
-  geom_line() +
-  labs(x = "", y = "Percentage", title = "EU Output Gap")
-# Load data ----
-load(url("https://www.dropbox.com/s/dfmc21bdovpmyjx/cb_project_data.RData?dl=1"))
-# Plot Data ----
-TAYLOR$rule <- 
-  rr + TAYLOR$infl + a * (TAYLOR$infl - pi_star) + b * (TAYLOR$gap)
-ggplot(data = EU, aes(x = date, y = infl)) +
-  geom_line() +
-  labs(x = "", y = "Percentage", title = "Inflation")
-ggplot(data = EU, aes(x = date, y = int)) +
-  geom_line() +
-  labs(x = "", y = "Percentage", title = "Interest Rate Growth of EU")
-ggplot(data = EU, aes(x = date, y = gap)) +
-  geom_line() +
-  labs(x = "", y = "Percentage", title = "EU Output Gap")
-# Parameters ----
-rr <- 2
-pi_star <- 2
+# Define Variables ----
 a <- 0.5
 b <- 0.5
-# Taylor Rule calculation ----
-EU$rule <- rr + EU$infl + a * (EU$infl - pi_star) + b * (EU$gap)
-ggplot(EU) + 
-  geom_line(aes(x = date, 
+pi_star <- 2
+rr <- 2
+rho <- 0.75
+#Plot Initial Data ----
+ggplot(data = EU, aes(x = date, y = infl)) +
+  geom_line() +
+  labs(x = "", y = "Percentage", title = "Inflation")
+ggplot(data = EU, aes(x = date, y = int)) +
+  geom_line() +
+  labs(x = "", y = "Percentage", title = "Interest Rate Growth of EU")
+ggplot(data = EU, aes(x = date, y = gap)) +
+  geom_line() +
+  labs(x = "", y = "Percentage", title = "EU Output Gap")
+# Taylor Rule ----
+EU$taylor <- 
+  rr + EU$infl + a * (EU$infl - pi_star) + 
+  b * (EU$gap)
+ggplot(EU) +
+  geom_line(aes(x = date,
                 y = int)) +
   geom_line(aes(x = date,
-                y = rule), 
-            color = "blue") +
-  labs(x = "", 
-       y = "Percent", 
-       title = "EU Effective Fed Funds Rate (black) and Taylor Rule (blue)")
-mean(EU$int - EU$rule)
-pi_t <- (head(EU$infl, -1))
+                y = taylor), color = "blue") +
+  labs(title = "EU Interest Rate (Black) and Taylor Rule (Blue)")
+# Difference Between Averages of Interest Rate and Taylor Rule ----
+mean(EU$int - EU$taylor, na.rm = T)
+# Speed-Limit ----
+EU$speed <- c(NA,
+              (rr + tail(EU$infl, -1) +
+                 a * (tail(EU$infl, -1) - pi_star) + 
+                 b * diff(EU$gap)
+               ))
+ggplot(EU) +
+  geom_line(aes(x = date,
+                y = int)) +
+  geom_line(aes(x = date,
+                y = taylor), color = "blue") +
+  geom_line(aes(x = date,
+                y = speed), color = "red") +
+  labs(title = "EU Interest Rate (Black), Taylor Rule (Blue), and Speed-Limit (Red)")
+# Difference Between Averages of Interest Rate and Speed-Limit Rule ----
+mean(EU$int - EU$speed, na.rm = T)
+# Inertial Taylor Rule ----
+EU$inertial <- c(NA, rho * head(EU$int, -1) +
+                   (1-rho) * (rr + tail(EU$infl, -1) +
+                                a * (tail(EU$infl, -1) - pi_star) + 
+                                b * tail(EU$gap, -1)))
+ggplot(EU) +
+  geom_line(aes(x = date,
+                y = int)) +
+  geom_line(aes(x = date,
+                y = taylor), color = "blue") +
+  geom_line(aes(x = date,
+                y = speed), color = "red") +
+  geom_line(aes(x = date,
+                y = inertial), color = "green") +
+  labs(title = "EU Interest Rate (Black), Taylor Rule (Blue), Speed-Limit (Red), and Inertial Rule (Green)")
+# Difference Between Averages of Interest Rate and Inertial Rule ----
+mean(EU$int - EU$inertial, na.rm = T)
+# Define new variables ----
+a_5 <- 2.5
+# Aggressive New Policy ----
+EU$aggressive <- c(NA,
+                 rho * head(EU$int, -1) +
+                   (1-rho) * (rr + tail(EU$infl, -1)) + 
+                                a_5 * (tail(EU$infl, -1) -pi_star) + 
+                                b * tail(EU$gap, -1))
+ggplot(EU) +
+  geom_line(aes(x = date,
+                y = int), color = "black") +
+  geom_line(aes(x = date,
+                y = taylor), color = "blue") +
+  geom_line(aes(x = date,
+                y = aggressive), color = "purple") +
+  labs(title = "EU Interest Rate (Black), Taylor Rule (Blue), and Aggressive New Policy Rule (purple)")
+# Average Difference Between Interest Rate and Aggressive New Rule ----
+mean(EU$int - EU$aggressive, na.rm = T)
+#Define Variables #6 ----
+a_6 <- 0.6
+b_6 <- 0.125
+rho_6 <- 0.85
+rr_6 <- 0
+# Zero Lower Bound ----
+EU$bound <- c(NA, rho_6 * head(EU$int, -1) + (1 - rho_6) * (rr_6 + tail(EU$infl, -1) +
+                                                 a_6 * (tail(EU$infl, -1) - pi_star) + 
+                                                 b_6 * tail(EU$gap, -1)))
+EU$bound[EU$bound <0] <-0
+ggplot(EU) +
+  geom_line(aes(x = date,
+                y = int), color = "black") +
+  geom_line(aes(x = date,
+                y = bound), color = "yellow") +
+  labs(title = "EU Interest Rate (Black) and Zero Lower Bound (Yellow)")
+# Average Difference Between Interest Rate and Zero Lower Bound
+mean(EU$int - EU$bound, na.rm = T)
+# Making New Functions #7 ----
+rr_6b <- -1
+rho_6b <- 0.9
+a_6b <- 0.4
 
-i_t <- rr + pi_t + a * (pi_t - pi_star) + b * ((tail(EU$gap, -1) - (head(EU$gap, -1)))
+EU$bound2 <- c(NA, rho_6b * head(EU$int, -1) + (1 - rho_6b) * (rr_6b + tail(EU$infl, -1) +
+                                                             a_6b * (tail(EU$infl, -1) - pi_star) + 
+                                                               b_6 * tail(EU$gap, -1)))
 
-EU$i_t <- i_t                                               
-
-EU$pi_t <- pi_t
-
-Q <- 0.75
-
-i_t_2 <- (1-Q) * (rr + pi_t + a * (pi_t - pi_star) + b * (tail(EU$gap, -1)) + (tail(EU$int, -1))
-
-EU$i_t_2 <- i_t_2             
+# Hybrid Rule Setup ----
+EU$hybrid_rule <- unlist(
+  c(
+    rep(NA, 16),
+    EU %>%
+      filter(date >= "2000-01-01") %>%
+      filter(date < "2010-01-01") %>%
+      select(bound),
+    EU %>%
+      filter(date >= "2010-01-01") %>%
+      select(bound2)
+  )
+)
+ggplot(EU) +
+  geom_line(aes(x = date,
+                y = int), color = "black") +
+  geom_line(aes(x = date,
+                y = hybrid_rule), color  = "firebrick2") +
+  labs(title = "EU Interest Rate (Black) and Hybrid Rule (~Red)")
+# Average Difference Between Interest Rate and Hybrid Rule ----
+mean(EU$int - EU$hybrid_rule, na.rm = T)
