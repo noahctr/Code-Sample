@@ -1,0 +1,60 @@
+# Load packages ----
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+# Load data ----
+load(url("https://www.dropbox.com/s/dfmc21bdovpmyjx/cb_project_data.RData?dl=1"))
+# Plot Data ----
+ggplot(data = EU, aes(x = date, y = infl)) +
+  geom_line() +
+  labs(x = "", y = "Percentage", title = "Inflation")
+ggplot(data = EU, aes(x = date, y = int)) +
+  geom_line() +
+  labs(x = "", y = "Percentage", title = "Interest Rate Growth of EU")
+ggplot(data = EU, aes(x = date, y = gap)) +
+  geom_line() +
+  labs(x = "", y = "Percentage", title = "EU Output Gap")
+# Load data ----
+load(url("https://www.dropbox.com/s/dfmc21bdovpmyjx/cb_project_data.RData?dl=1"))
+# Plot Data ----
+TAYLOR$rule <- 
+  rr + TAYLOR$infl + a * (TAYLOR$infl - pi_star) + b * (TAYLOR$gap)
+ggplot(data = EU, aes(x = date, y = infl)) +
+  geom_line() +
+  labs(x = "", y = "Percentage", title = "Inflation")
+ggplot(data = EU, aes(x = date, y = int)) +
+  geom_line() +
+  labs(x = "", y = "Percentage", title = "Interest Rate Growth of EU")
+ggplot(data = EU, aes(x = date, y = gap)) +
+  geom_line() +
+  labs(x = "", y = "Percentage", title = "EU Output Gap")
+# Parameters ----
+rr <- 2
+pi_star <- 2
+a <- 0.5
+b <- 0.5
+# Taylor Rule calculation ----
+EU$rule <- rr + EU$infl + a * (EU$infl - pi_star) + b * (EU$gap)
+ggplot(EU) + 
+  geom_line(aes(x = date, 
+                y = int)) +
+  geom_line(aes(x = date,
+                y = rule), 
+            color = "blue") +
+  labs(x = "", 
+       y = "Percent", 
+       title = "EU Effective Fed Funds Rate (black) and Taylor Rule (blue)")
+mean(EU$int - EU$rule)
+pi_t <- (head(EU$infl, -1))
+
+i_t <- rr + pi_t + a * (pi_t - pi_star) + b * ((tail(EU$gap, -1) - (head(EU$gap, -1)))
+
+EU$i_t <- i_t                                               
+
+EU$pi_t <- pi_t
+
+Q <- 0.75
+
+i_t_2 <- (1-Q) * (rr + pi_t + a * (pi_t - pi_star) + b * (tail(EU$gap, -1)) + (tail(EU$int, -1))
+
+EU$i_t_2 <- i_t_2             
